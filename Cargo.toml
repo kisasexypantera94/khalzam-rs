@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["kisasexypantera94 <green.grinya@gmail.com>"]
 edition = "2018"
 license = "MIT"
+description = "Simple audio recognition library, port of khalzam-go"
 
 [dependencies]
 postgres = "*"
