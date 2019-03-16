@@ -7,6 +7,6 @@ license = "MIT"
 description = "Simple audio recognition library, port of khalzam-go"
 
 [dependencies]
-postgres = "*"
-minimp3 = "*"
-rustfft = "*"
+postgres = "0.15"
+minimp3 = "0.3.2"
+rustfft = "3.0.0"
