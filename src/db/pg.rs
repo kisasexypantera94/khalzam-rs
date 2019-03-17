@@ -1,4 +1,7 @@
+use crate::db::Repository;
+use crate::MusicLibrary;
 use postgres::{Connection, TlsMode};
+use std::error::Error;
 
 pub struct PostgresConfig<'a> {
     pub dbname: &'a str,
@@ -12,12 +15,42 @@ pub struct PostgresRepo {
 }
 
 impl PostgresRepo {
-    pub fn open(cfg: &Config) -> Result<MusicLibrary, postgres::Error> {
+    pub fn open(cfg: &PostgresConfig) -> Result<MusicLibrary<PostgresRepo>, postgres::Error> {
         let addr = format!(
             "postgres://{}:{}@localhost/{}",
             cfg.user, cfg.password, cfg.dbname
         );
         let conn = Connection::connect(addr, TlsMode::None)?;
-        Ok(MusicLibrary { conn })
+        Ok(MusicLibrary {
+            repo: PostgresRepo { conn },
+        })
+    }
+}
+
+impl Repository for PostgresRepo {
+    fn index(&self, song: &str, hash_array: &Vec<usize>) -> Result<(), Box<Error>> {
+        let sid: i32 = self
+            .conn
+            .query(
+                "INSERT INTO songs(song) VALUES($1) returning sid;",
+                &[&song],
+            )?
+            .get(0)
+            .get(0);
+
+        for (time, hash) in hash_array.iter().enumerate() {
+            self.conn.query(
+                "INSERT INTO hashes(hash, time, sid) VALUES($1, $2, $3);",
+                &[&(*hash as i64), &(time as i32), &sid],
+            )?;
+        }
+
+        Ok(())
+    }
+    fn find(&self, filename: &str) -> Result<String, Box<Error>> {
+        Ok("".to_string())
+    }
+    fn delete(&self, song: &str) -> Result<(), Box<Error>> {
+        Ok(())
     }
 }

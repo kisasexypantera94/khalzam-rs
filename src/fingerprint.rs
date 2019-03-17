@@ -2,8 +2,8 @@ use minimp3::{Decoder, Error, Frame};
 use rustfft::num_complex::Complex;
 use rustfft::num_traits::Zero;
 use rustfft::FFTplanner;
-use std::f64;
 use std::fs::File;
+use std::i16;
 
 const FFT_WINDOW_SIZE: usize = 4096;
 const FREQ_BINS: &[usize] = &[40, 80, 120, 180, 300];
@@ -32,8 +32,8 @@ fn decode_mp3(filename: &str) -> Result<Vec<i16>, Error> {
 fn stereo_i16_to_mono_f64(samples_i16: &Vec<i16>) -> Vec<f64> {
     let mut samples_f64 = Vec::new();
 
-    for i in (1..samples_i16.len()).step_by(2) {
-        samples_f64.push((samples_i16[i - 1] as f64 + samples_i16[i] as f64) / f64::MAX);
+    for pair in samples_i16.chunks_exact(2) {
+        samples_f64.push((pair[0] as f64 + pair[1] as f64) / 2 as f64 / i16::MAX as f64);
     }
 
     samples_f64
@@ -43,7 +43,7 @@ fn get_key_points(arr: &Vec<Complex<f64>>) -> usize {
     let mut high_scores: Vec<f64> = vec![0.0; FREQ_BINS.len()];
     let mut record_points: Vec<usize> = vec![0; FREQ_BINS.len()];
 
-    for bin in FREQ_BINS[0]..FREQ_BINS[FREQ_BINS.len()] {
+    for bin in FREQ_BINS[0]..FREQ_BINS[FREQ_BINS.len() - 1] {
         let magnitude = arr[bin].re.hypot(arr[bin].im);
 
         let mut bin_idx = 0;
@@ -74,7 +74,7 @@ pub fn calc_fingerprint(filename: &str) -> Result<Vec<usize>, Error> {
     let mut planner = FFTplanner::new(false);
     let fft = planner.plan_fft(FFT_WINDOW_SIZE);
 
-    for chunk in pcm_f64.windows(4096) {
+    for chunk in pcm_f64.chunks_exact(FFT_WINDOW_SIZE) {
         let mut input: Vec<Complex<f64>> = chunk.iter().map(|x| Complex::from(x)).collect();
         let mut output: Vec<Complex<f64>> = vec![Complex::zero(); FFT_WINDOW_SIZE];
         fft.process(&mut input, &mut output);

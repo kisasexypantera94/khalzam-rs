@@ -1,11 +1,11 @@
+pub mod db;
+mod fingerprint;
+
+use db::Repository;
 use std::error::Error;
 use std::path::Path;
 
-mod db;
-use db::Repository;
-mod fingerprint;
-
-struct MusicLibrary<T>
+pub struct MusicLibrary<T>
 where
     T: Repository,
 {
@@ -16,7 +16,7 @@ impl<T> MusicLibrary<T>
 where
     T: Repository,
 {
-    fn add(&self, filename: &str) -> Result<(), Box<Error>> {
+    pub fn add(&self, filename: &str) -> Result<(), Box<Error>> {
         let hash_array = fingerprint::calc_fingerprint(filename)?;
 
         let song = match Path::new(filename).file_stem() {
