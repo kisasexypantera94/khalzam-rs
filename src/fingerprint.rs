@@ -33,7 +33,7 @@ fn stereo_i16_to_mono_f64(samples_i16: &Vec<i16>) -> Vec<f64> {
     let mut samples_f64 = Vec::new();
 
     for pair in samples_i16.chunks_exact(2) {
-        samples_f64.push((pair[0] as f64 + pair[1] as f64) / 2 as f64 / i16::MAX as f64);
+        samples_f64.push(((pair[0] + pair[1]) / 2 / i16::MAX) as f64);
     }
 
     samples_f64
@@ -43,7 +43,7 @@ fn get_key_points(arr: &Vec<Complex<f64>>) -> usize {
     let mut high_scores: Vec<f64> = vec![0.0; FREQ_BINS.len()];
     let mut record_points: Vec<usize> = vec![0; FREQ_BINS.len()];
 
-    for bin in FREQ_BINS[0]..FREQ_BINS[FREQ_BINS.len() - 1] {
+    for bin in FREQ_BINS[0]..*FREQ_BINS.last().unwrap() {
         let magnitude = arr[bin].re.hypot(arr[bin].im);
 
         let mut bin_idx = 0;
@@ -61,9 +61,9 @@ fn get_key_points(arr: &Vec<Complex<f64>>) -> usize {
 }
 
 fn hash(arr: &Vec<usize>) -> usize {
-    (arr[3] - (arr[3] % FUZZ_FACTOR)) * 1e8 as usize
-        + (arr[2] - (arr[2] % FUZZ_FACTOR)) * 1e5 as usize
-        + (arr[1] - (arr[1] % FUZZ_FACTOR)) * 1e2 as usize
+    (arr[3] - (arr[3] % FUZZ_FACTOR)) * usize::pow(10, 8)
+        + (arr[2] - (arr[2] % FUZZ_FACTOR)) * usize::pow(10, 5)
+        + (arr[1] - (arr[1] % FUZZ_FACTOR)) * usize::pow(10, 2)
         + (arr[0] - (arr[0] % FUZZ_FACTOR))
 }
 
@@ -78,6 +78,7 @@ pub fn calc_fingerprint(filename: &str) -> Result<Vec<usize>, Error> {
         let mut input: Vec<Complex<f64>> = chunk.iter().map(|x| Complex::from(x)).collect();
         let mut output: Vec<Complex<f64>> = vec![Complex::zero(); FFT_WINDOW_SIZE];
         fft.process(&mut input, &mut output);
+
         hash_array.push(get_key_points(&output));
     }
 
