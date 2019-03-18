@@ -33,7 +33,7 @@ fn stereo_i16_to_mono_f64(samples_i16: &Vec<i16>) -> Vec<f64> {
     let mut samples_f64 = Vec::new();
 
     for pair in samples_i16.chunks_exact(2) {
-        samples_f64.push(((pair[0] + pair[1]) / 2 / i16::MAX) as f64);
+        samples_f64.push((pair[0] as f64 + pair[1] as f64) / 2 as f64 / i16::MAX as f64);
     }
 
     samples_f64
@@ -43,7 +43,7 @@ fn get_key_points(arr: &Vec<Complex<f64>>) -> usize {
     let mut high_scores: Vec<f64> = vec![0.0; FREQ_BINS.len()];
     let mut record_points: Vec<usize> = vec![0; FREQ_BINS.len()];
 
-    for bin in FREQ_BINS[0]..*FREQ_BINS.last().unwrap() {
+    for bin in FREQ_BINS[0]..FREQ_BINS[FREQ_BINS.len() - 1] {
         let magnitude = arr[bin].re.hypot(arr[bin].im);
 
         let mut bin_idx = 0;
