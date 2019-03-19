@@ -4,24 +4,14 @@ use postgres::{Connection, TlsMode};
 use std::error::Error;
 use std::sync::{Arc, Mutex};
 
-pub struct PostgresConfig<'a> {
-    pub dbname: &'a str,
-    pub user: &'a str,
-    pub password: &'a str,
-}
-
 #[derive(Debug)]
 pub struct PostgresRepo {
     conn: Arc<Mutex<Connection>>,
 }
 
 impl PostgresRepo {
-    pub fn open(cfg: &PostgresConfig) -> Result<MusicLibrary<PostgresRepo>, postgres::Error> {
-        let addr = format!(
-            "postgres://{}:{}@localhost/{}",
-            cfg.user, cfg.password, cfg.dbname
-        );
-        let conn = Arc::new(Mutex::new(Connection::connect(addr, TlsMode::None)?));
+    pub fn open(pg_url: &str) -> Result<MusicLibrary<PostgresRepo>, postgres::Error> {
+        let conn = Arc::new(Mutex::new(Connection::connect(pg_url, TlsMode::None)?));
         Ok(MusicLibrary {
             repo: PostgresRepo { conn },
         })
