@@ -2,6 +2,7 @@ use crate::db::Repository;
 use crate::MusicLibrary;
 use postgres::{Connection, TlsMode};
 use std::error::Error;
+use std::sync::{Arc, Mutex};
 
 pub struct PostgresConfig<'a> {
     pub dbname: &'a str,
@@ -11,7 +12,7 @@ pub struct PostgresConfig<'a> {
 
 #[derive(Debug)]
 pub struct PostgresRepo {
-    conn: Connection,
+    conn: Arc<Mutex<Connection>>,
 }
 
 impl PostgresRepo {
@@ -20,7 +21,7 @@ impl PostgresRepo {
             "postgres://{}:{}@localhost/{}",
             cfg.user, cfg.password, cfg.dbname
         );
-        let conn = Connection::connect(addr, TlsMode::None)?;
+        let conn = Arc::new(Mutex::new(Connection::connect(addr, TlsMode::None)?));
         Ok(MusicLibrary {
             repo: PostgresRepo { conn },
         })
@@ -29,8 +30,8 @@ impl PostgresRepo {
 
 impl Repository for PostgresRepo {
     fn index(&self, song: &str, hash_array: &Vec<usize>) -> Result<(), Box<Error>> {
-        let sid: i32 = self
-            .conn
+        let conn = self.conn.lock().unwrap();
+        let sid: i32 = conn
             .query(
                 "INSERT INTO songs(song) VALUES($1) returning sid;",
                 &[&song],
@@ -39,7 +40,7 @@ impl Repository for PostgresRepo {
             .get(0);
 
         for (time, hash) in hash_array.iter().enumerate() {
-            self.conn.query(
+            conn.query(
                 "INSERT INTO hashes(hash, time, sid) VALUES($1, $2, $3);",
                 &[&(*hash as i64), &(time as i32), &sid],
             )?;
