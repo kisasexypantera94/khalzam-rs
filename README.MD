@@ -8,9 +8,9 @@ This is a port of my recent project
 ## Setup
 You need to create and initialize database:
 ```zsh
-$ cd src/db
-$ createdb -O user databasename
-$ psql -f initdb.sql databasename
+cd src/db
+createdb -O user databasename
+psql -f initdb.sql databasename
 ```
 
 ## [Usage examples](https://github.com/kisasexypantera94/khalzam-rs/tree/master/examples)
