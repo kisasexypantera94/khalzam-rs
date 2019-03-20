@@ -1,7 +1,8 @@
-use minimp3::{Decoder, Error, Frame};
+use minimp3::{Decoder, Frame};
 use rustfft::num_complex::Complex;
 use rustfft::num_traits::Zero;
 use rustfft::FFTplanner;
+use std::error::Error;
 use std::fs::File;
 use std::i16;
 
@@ -11,8 +12,8 @@ const FREQ_BIN_FIRST: usize = 40;
 const FREQ_BIN_LAST: usize = 300;
 const FUZZ_FACTOR: usize = 2;
 
-fn decode_mp3(filename: &str) -> Result<Vec<i16>, Error> {
-    let mut decoder = Decoder::new(File::open(filename).unwrap());
+fn decode_mp3(filename: &str) -> Result<Vec<i16>, Box<Error>> {
+    let mut decoder = Decoder::new(File::open(filename)?);
     let mut frames = Vec::<i16>::new();
 
     loop {
@@ -23,8 +24,8 @@ fn decode_mp3(filename: &str) -> Result<Vec<i16>, Error> {
                 channels: _,
                 ..
             }) => frames.extend(data),
-            Err(Error::Eof) => break,
-            Err(e) => return Err(e),
+            Err(minimp3::Error::Eof) => break,
+            Err(e) => return Err(Box::from(e)),
         }
     }
 
@@ -69,7 +70,7 @@ fn hash(arr: &Vec<usize>) -> usize {
         + (arr[0] - (arr[0] % FUZZ_FACTOR))
 }
 
-pub fn calc_fingerprint(filename: &str) -> Result<Vec<usize>, Error> {
+pub fn calc_fingerprint(filename: &str) -> Result<Vec<usize>, Box<Error>> {
     let pcm_f64 = stereo_i16_to_mono_f64(&decode_mp3(filename)?);
 
     let mut hash_array = Vec::<usize>::new();
