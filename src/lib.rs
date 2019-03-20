@@ -16,6 +16,7 @@ impl<T> MusicLibrary<T>
 where
     T: Repository,
 {
+    /// Add song
     pub fn add(&self, filename: &str) -> Result<(), Box<Error>> {
         let hash_array = fingerprint::calc_fingerprint(filename)?;
 
@@ -28,6 +29,19 @@ where
         };
 
         self.repo.index(song, &hash_array)
+    }
+
+    /// Recognize song
+    pub fn recognize(&self, filename: &str) -> Result<String, Box<Error>> {
+        let hash_array = fingerprint::calc_fingerprint(filename)?;
+
+        match self.repo.find(&hash_array) {
+            Ok(opt) => match opt {
+                Some(res) => Ok(res),
+                None => Ok(String::from("No matchings")),
+            },
+            Err(e) => Err(Box::from(e)),
+        }
     }
 }
 
