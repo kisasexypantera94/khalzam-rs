@@ -1,7 +1,5 @@
 # Khalzam
 
-## Setup
-# Khalzam
 ## About
 This is a port of my recent project
 [khalzam-go](https://github.com/kisasexypantera94/khalzam).
