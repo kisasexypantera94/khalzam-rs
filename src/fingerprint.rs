@@ -7,6 +7,8 @@ use std::i16;
 
 const FFT_WINDOW_SIZE: usize = 4096;
 const FREQ_BINS: &[usize] = &[40, 80, 120, 180, 300];
+const FREQ_BIN_FIRST: usize = 40;
+const FREQ_BIN_LAST: usize = 300;
 const FUZZ_FACTOR: usize = 2;
 
 fn decode_mp3(filename: &str) -> Result<Vec<i16>, Error> {
@@ -17,8 +19,8 @@ fn decode_mp3(filename: &str) -> Result<Vec<i16>, Error> {
         match decoder.next_frame() {
             Ok(Frame {
                 data,
-                sample_rate,
-                channels,
+                sample_rate: _,
+                channels: _,
                 ..
             }) => frames.extend(data),
             Err(Error::Eof) => break,
@@ -43,7 +45,7 @@ fn get_key_points(arr: &Vec<Complex<f64>>) -> usize {
     let mut high_scores: Vec<f64> = vec![0.0; FREQ_BINS.len()];
     let mut record_points: Vec<usize> = vec![0; FREQ_BINS.len()];
 
-    for bin in FREQ_BINS[0]..FREQ_BINS[FREQ_BINS.len() - 1] {
+    for bin in FREQ_BIN_FIRST..=FREQ_BIN_LAST {
         let magnitude = arr[bin].re.hypot(arr[bin].im);
 
         let mut bin_idx = 0;
