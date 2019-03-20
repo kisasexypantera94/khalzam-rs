@@ -18,8 +18,6 @@ where
 {
     /// Add song
     pub fn add(&self, filename: &str) -> Result<(), Box<Error>> {
-        let hash_array = fingerprint::calc_fingerprint(filename)?;
-
         let song = match Path::new(filename).file_stem() {
             Some(stem) => match stem.to_str() {
                 Some(stem_str) => stem_str,
@@ -27,11 +25,11 @@ where
             },
             None => return Err(Box::from("filename is empty")),
         };
-
+        let hash_array = fingerprint::calc_fingerprint(filename)?;
         self.repo.index(song, &hash_array)
     }
 
-    /// Recognize song
+    /// Recognize song. It returns the songname of the closest match in repository.
     pub fn recognize(&self, filename: &str) -> Result<String, Box<Error>> {
         let hash_array = fingerprint::calc_fingerprint(filename)?;
 
@@ -40,7 +38,7 @@ where
                 Some(res) => Ok(res),
                 None => Ok(String::from("No matchings")),
             },
-            Err(e) => Err(Box::from(e)),
+            Err(e) => Err(e),
         }
     }
 }

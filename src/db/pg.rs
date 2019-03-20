@@ -43,7 +43,7 @@ impl PostgresRepo {
 }
 
 impl Repository for PostgresRepo {
-    fn index(&self, song: &str, hash_array: &Vec<usize>) -> Result<(), Box<Error>> {
+    fn index(&self, song: &str, hash_array: &[usize]) -> Result<(), Box<Error>> {
         let conn = self.conn.lock().unwrap();
 
         let sid: PgInteger = conn
@@ -64,7 +64,7 @@ impl Repository for PostgresRepo {
         Ok(())
     }
 
-    fn find(&self, hash_array: &Vec<usize>) -> Result<Option<String>, Box<Error>> {
+    fn find(&self, hash_array: &[usize]) -> Result<Option<String>, Box<Error>> {
         let mut cnt = HashMap::<i32, Table>::new();
 
         let conn = self.conn.lock().unwrap();
@@ -86,20 +86,11 @@ impl Repository for PostgresRepo {
                     .entry(hash_row.time - t as i32)
                     .or_insert(0) += 1;
 
-                if cnt
-                    .get(&hash_row.sid)
-                    .unwrap()
-                    .timedelta_best
-                    .get(&(hash_row.time - t as i32))
-                    .unwrap()
-                    > &cnt.get(&hash_row.sid).unwrap().absolute_best
+                if cnt[&(hash_row.sid)].timedelta_best[&(hash_row.time - t as i32)]
+                    > cnt[&hash_row.sid].absolute_best
                 {
-                    cnt.get_mut(&hash_row.sid).unwrap().absolute_best = *cnt
-                        .get(&hash_row.sid)
-                        .unwrap()
-                        .timedelta_best
-                        .get(&(hash_row.time - t as i32))
-                        .unwrap();
+                    cnt.get_mut(&hash_row.sid).unwrap().absolute_best =
+                        cnt[&hash_row.sid].timedelta_best[&(hash_row.time - t as i32)]
                 }
             }
         }
@@ -111,7 +102,7 @@ impl Repository for PostgresRepo {
                 match_num: table.absolute_best,
             });
         }
-        if matchings.len() == 0 {
+        if matchings.is_empty() {
             return Ok(None);
         }
         matchings.sort_by_key(|a| Reverse(a.match_num));

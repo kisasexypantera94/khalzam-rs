@@ -18,12 +18,7 @@ fn decode_mp3(filename: &str) -> Result<Vec<i16>, Box<Error>> {
 
     loop {
         match decoder.next_frame() {
-            Ok(Frame {
-                data,
-                sample_rate: _,
-                channels: _,
-                ..
-            }) => frames.extend(data),
+            Ok(Frame { data, .. }) => frames.extend(&data),
             Err(minimp3::Error::Eof) => break,
             Err(e) => return Err(Box::from(e)),
         }
@@ -32,17 +27,17 @@ fn decode_mp3(filename: &str) -> Result<Vec<i16>, Box<Error>> {
     Ok(frames)
 }
 
-fn stereo_i16_to_mono_f64(samples_i16: &Vec<i16>) -> Vec<f64> {
+fn stereo_i16_to_mono_f64(samples_i16: &[i16]) -> Vec<f64> {
     let mut samples_f64 = Vec::new();
 
     for pair in samples_i16.chunks_exact(2) {
-        samples_f64.push((pair[0] as f64 + pair[1] as f64) / 2 as f64 / i16::MAX as f64);
+        samples_f64.push(f64::from(pair[0] / 2 + pair[1] / 2) / f64::from(i16::MAX));
     }
 
     samples_f64
 }
 
-fn get_key_points(arr: &Vec<Complex<f64>>) -> usize {
+fn get_key_points(arr: &[Complex<f64>]) -> usize {
     let mut high_scores: Vec<f64> = vec![0.0; FREQ_BINS.len()];
     let mut record_points: Vec<usize> = vec![0; FREQ_BINS.len()];
 
@@ -63,7 +58,7 @@ fn get_key_points(arr: &Vec<Complex<f64>>) -> usize {
     hash(&record_points)
 }
 
-fn hash(arr: &Vec<usize>) -> usize {
+fn hash(arr: &[usize]) -> usize {
     (arr[3] - (arr[3] % FUZZ_FACTOR)) * usize::pow(10, 8)
         + (arr[2] - (arr[2] % FUZZ_FACTOR)) * usize::pow(10, 5)
         + (arr[1] - (arr[1] % FUZZ_FACTOR)) * usize::pow(10, 2)
@@ -78,7 +73,7 @@ pub fn calc_fingerprint(filename: &str) -> Result<Vec<usize>, Box<Error>> {
     let fft = planner.plan_fft(FFT_WINDOW_SIZE);
 
     for chunk in pcm_f64.chunks_exact(FFT_WINDOW_SIZE) {
-        let mut input: Vec<Complex<f64>> = chunk.iter().map(|x| Complex::from(x)).collect();
+        let mut input: Vec<Complex<f64>> = chunk.iter().map(Complex::from).collect();
         let mut output: Vec<Complex<f64>> = vec![Complex::zero(); FFT_WINDOW_SIZE];
         fft.process(&mut input, &mut output);
 
