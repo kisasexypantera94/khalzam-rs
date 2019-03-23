@@ -1,8 +1,9 @@
 use crate::db::Repository;
+use crate::fingerprint::FingerprintHandle;
 use crate::MusicLibrary;
+use hashbrown::HashMap;
 use postgres::{Connection, TlsMode};
 use std::cmp::Reverse;
-use std::collections::HashMap;
 use std::error::Error;
 use std::sync::{Arc, Mutex};
 
@@ -14,6 +15,7 @@ struct Candidate {
     match_num: usize,
 }
 
+/// Table is used as a counter structure to find the most similar songs in database.
 struct Table {
     /// highest number of matches among timedelta_best
     absolute_best: usize,
@@ -28,7 +30,6 @@ struct Hash {
     sid: PgInteger,
 }
 
-#[derive(Debug)]
 pub struct PostgresRepo {
     conn: Arc<Mutex<Connection>>,
 }
@@ -38,6 +39,7 @@ impl PostgresRepo {
         let conn = Arc::new(Mutex::new(Connection::connect(pg_url, TlsMode::None)?));
         Ok(MusicLibrary {
             repo: PostgresRepo { conn },
+            fp_handle: FingerprintHandle::new(),
         })
     }
 }
@@ -54,11 +56,9 @@ impl Repository for PostgresRepo {
             .get(0)
             .get("sid");
 
+        let stmt = conn.prepare("INSERT INTO hashes(hash, time, sid) VALUES($1, $2, $3);")?;
         for (time, hash) in hash_array.iter().enumerate() {
-            conn.query(
-                "INSERT INTO hashes(hash, time, sid) VALUES($1, $2, $3);",
-                &[&(*hash as PgBigInt), &(time as PgInteger), &sid],
-            )?;
+            stmt.execute(&[&(*hash as PgBigInt), &(time as PgInteger), &sid])?;
         }
 
         Ok(())
@@ -95,6 +95,10 @@ impl Repository for PostgresRepo {
             }
         }
 
+        if cnt.is_empty() {
+            return Ok(None);
+        }
+
         let mut matchings = Vec::<Candidate>::new();
         for (song, table) in cnt {
             matchings.push(Candidate {
@@ -102,9 +106,7 @@ impl Repository for PostgresRepo {
                 match_num: table.absolute_best,
             });
         }
-        if matchings.is_empty() {
-            return Ok(None);
-        }
+
         matchings.sort_by_key(|a| Reverse(a.match_num));
 
         let song_name: String = conn

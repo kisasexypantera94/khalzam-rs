@@ -2,14 +2,17 @@ pub mod db;
 mod fingerprint;
 
 use db::Repository;
+use fingerprint::FingerprintHandle;
 use std::error::Error;
 use std::path::Path;
 
+/// MusicLibrary holds a value which implements Repository interface.
 pub struct MusicLibrary<T>
 where
     T: Repository,
 {
     repo: T,
+    fp_handle: FingerprintHandle,
 }
 
 impl<T> MusicLibrary<T>
@@ -18,6 +21,8 @@ where
 {
     /// Add song
     pub fn add(&self, filename: &str) -> Result<(), Box<Error>> {
+        check_extension(filename)?;
+
         let song = match Path::new(filename).file_stem() {
             Some(stem) => match stem.to_str() {
                 Some(stem_str) => stem_str,
@@ -25,14 +30,15 @@ where
             },
             None => return Err(Box::from("filename is empty")),
         };
-        let hash_array = fingerprint::calc_fingerprint(filename)?;
+        let hash_array = self.fp_handle.calc_fingerprint(filename)?;
         self.repo.index(song, &hash_array)
     }
 
     /// Recognize song. It returns the songname of the closest match in repository.
     pub fn recognize(&self, filename: &str) -> Result<String, Box<Error>> {
-        let hash_array = fingerprint::calc_fingerprint(filename)?;
+        check_extension(filename)?;
 
+        let hash_array = self.fp_handle.calc_fingerprint(filename)?;
         match self.repo.find(&hash_array) {
             Ok(opt) => match opt {
                 Some(res) => Ok(res),
@@ -41,6 +47,22 @@ where
             Err(e) => Err(e),
         }
     }
+}
+
+fn check_extension(filename: &str) -> Result<(), Box<Error>> {
+    let path = Path::new(filename);
+    let ext = match path.extension() {
+        Some(e_osstr) => match e_osstr.to_str() {
+            Some(e) => e,
+            None => return Err(Box::from("Invalid extension")),
+        },
+        None => return Err(Box::from("Invalid extension")),
+    };
+    if ext != "mp3" {
+        return Err(Box::from("Invalid extension"));
+    }
+
+    Ok(())
 }
 
 #[cfg(test)]
