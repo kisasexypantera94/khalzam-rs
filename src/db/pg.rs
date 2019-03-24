@@ -23,6 +23,7 @@ struct Table {
     timedelta_best: HashMap<i32, usize>,
 }
 
+#[allow(dead_code)]
 struct Hash {
     hid: PgInteger,
     hash: PgBigInt,
@@ -119,7 +120,11 @@ impl Repository for PostgresRepo {
         Ok(Some(song_name))
     }
 
-    fn delete(&self, song: &str) -> Result<(), Box<Error>> {
-        Ok(())
+    fn delete(&self, song: &str) -> Result<u64, Box<Error>> {
+        let conn = self.conn.lock().unwrap();
+        match conn.execute("DELETE FROM songs WHERE song=$1;", &[&song]) {
+            Ok(affected) => Ok(affected),
+            Err(e) => Err(Box::from(e)),
+        }
     }
 }

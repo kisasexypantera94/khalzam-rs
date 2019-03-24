@@ -2,8 +2,12 @@ use std::error::Error;
 
 pub mod pg;
 
+/// Repository is an abstraction of database containing fingerprints.
 pub trait Repository {
+    /// Map hashes from hash_array to song.
     fn index(&self, song: &str, hash_array: &[usize]) -> Result<(), Box<Error>>;
-    fn find(&self, hash_array: &[usize]) -> Result<Option<String>, Box<Error>>;
-    fn delete(&self, song: &str) -> Result<(), Box<Error>>;
+    /// Find the most similar song by hashes.
+    fn find(&self, hash_array: &[usize]) -> Result<Option<String>, Box<Error>>; // It may be better to replace String result with generic.
+    /// Delete song from database.
+    fn delete(&self, song: &str) -> Result<u64, Box<Error>>;
 }

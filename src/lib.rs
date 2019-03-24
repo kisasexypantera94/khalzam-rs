@@ -42,9 +42,17 @@ where
         match self.repo.find(&hash_array) {
             Ok(opt) => match opt {
                 Some(res) => Ok(res),
-                None => Ok(String::from("No matchings")),
+                None => Ok("No matchings".to_string()),
             },
             Err(e) => Err(e),
+        }
+    }
+
+    pub fn delete(&self, songname: &str) -> Result<String, Box<Error>> {
+        match self.repo.delete(songname) {
+            Ok(x) if x > 0 => Ok("Successfully deleted".to_string()),
+            Ok(_) => Ok("Song not found".to_string()),
+            Err(e) => Err(Box::from(e)),
         }
     }
 }
