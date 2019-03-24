@@ -13,7 +13,7 @@ const FREQ_BIN_LAST: usize = 300;
 const FUZZ_FACTOR: usize = 2;
 
 use byteorder::{LittleEndian, ReadBytesExt};
-use libc::c_int;
+use libc::{c_int, c_long};
 use mpg123_sys as mpg123;
 use std::ffi::CString;
 use std::io::Cursor;
@@ -79,6 +79,8 @@ fn decode_mp3(filename: &str) -> Result<Vec<f64>, Box<Error>> {
     Ok(frames)
 }
 
+const MPG123_FORCE_FLOAT: c_long = 0x00400;
+const MPG123_MONO_MIX: c_long = 0x00004;
 /// Decode mp3 using libmpg123.
 /// Works slower than default minimp3 version but gives generally better results
 /// due to intelligent mono mixing as I suppose.
@@ -124,7 +126,12 @@ fn decode_mp3_mpg123(filename: &str) -> Result<Vec<f64>, Box<Error>> {
         if result != mpg123::MPG123_OK as c_int || mpg123_handle.is_null() {
             cleanup_and_raise!("failed to instantiate mpg123");
         }
-        result = mpg123::mpg123_param(mpg123_handle, mpg123::MPG123_FLAGS, 0x00004 | 0x00400, 0.);
+        result = mpg123::mpg123_param(
+            mpg123_handle,
+            mpg123::MPG123_FLAGS,
+            MPG123_MONO_MIX | MPG123_FORCE_FLOAT,
+            0.,
+        );
 
         if result != mpg123::MPG123_OK as c_int {
             cleanup_and_raise!("failed to add params mpg123");
