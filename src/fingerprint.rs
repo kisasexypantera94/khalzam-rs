@@ -84,6 +84,7 @@ const MPG123_MONO_MIX: c_long = 0x00004;
 /// Decode mp3 using libmpg123.
 /// Works slower than default minimp3 version but gives generally better results
 /// due to intelligent mono mixing as I suppose.
+#[allow(dead_code)]
 fn decode_mp3_mpg123(filename: &str) -> Result<Vec<f64>, Box<Error>> {
     let mut frames = Vec::new();
     let path = Path::new(filename);
