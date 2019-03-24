@@ -12,14 +12,6 @@ const FREQ_BIN_FIRST: usize = 40;
 const FREQ_BIN_LAST: usize = 300;
 const FUZZ_FACTOR: usize = 2;
 
-use byteorder::{LittleEndian, ReadBytesExt};
-use libc::{c_int, c_long};
-use mpg123_sys as mpg123;
-use std::ffi::CString;
-use std::io::Cursor;
-use std::path::Path;
-use std::ptr;
-
 /// Helper struct for calculating acoustic fingerprint
 pub struct FingerprintHandle {
     /// FFT algorithm
@@ -74,102 +66,6 @@ fn decode_mp3(filename: &str) -> Result<Vec<f64>, Box<Error>> {
             Err(minimp3::Error::Eof) => break,
             Err(e) => return Err(Box::from(e)),
         }
-    }
-
-    Ok(frames)
-}
-
-const MPG123_FORCE_FLOAT: c_long = 0x00400;
-const MPG123_MONO_MIX: c_long = 0x00004;
-/// Decode mp3 using libmpg123.
-/// Works slower than default minimp3 version but gives generally better results
-/// due to intelligent mono mixing as I suppose.
-#[allow(dead_code)]
-fn decode_mp3_mpg123(filename: &str) -> Result<Vec<f64>, Box<Error>> {
-    let mut frames = Vec::new();
-    let path = Path::new(filename);
-    if !path.exists() {
-        return Err(Box::from("the file does not exist"));
-    }
-    let path = match path.to_str() {
-        Some(path) => match CString::new(path) {
-            Ok(path) => path,
-            _ => return Err(Box::from("the path is malformed")),
-        },
-        _ => return Err(Box::from("the path is malformed")),
-    };
-    unsafe {
-        let mut result = mpg123::mpg123_init();
-        if result != mpg123::MPG123_OK as c_int {
-            return Err(Box::from("failed to initialize mpg123"));
-        }
-        let mpg123_handle;
-        let mut buffer = ptr::null_mut();
-        macro_rules! cleanup(
-            () => ({
-                if buffer != ptr::null_mut() {
-                    libc::free(buffer as *mut _);
-                }
-                if !mpg123_handle.is_null() {
-                    mpg123::mpg123_close(mpg123_handle);
-                    mpg123::mpg123_delete(mpg123_handle);
-                }
-                mpg123::mpg123_exit();
-            });
-        );
-        macro_rules! cleanup_and_raise(
-            ($message:expr) => ({
-                cleanup!();
-                return Err(Box::from($message));
-            });
-        );
-        mpg123_handle = mpg123::mpg123_new(ptr::null(), &mut result);
-        if result != mpg123::MPG123_OK as c_int || mpg123_handle.is_null() {
-            cleanup_and_raise!("failed to instantiate mpg123");
-        }
-        result = mpg123::mpg123_param(
-            mpg123_handle,
-            mpg123::MPG123_FLAGS,
-            MPG123_MONO_MIX | MPG123_FORCE_FLOAT,
-            0.,
-        );
-
-        if result != mpg123::MPG123_OK as c_int {
-            cleanup_and_raise!("failed to add params mpg123");
-        }
-        result = mpg123::mpg123_open(mpg123_handle, path.as_ptr());
-        if result != mpg123::MPG123_OK as c_int {
-            cleanup_and_raise!("failed to open the input");
-        }
-        let mut rate = 0;
-        let mut channels = 0;
-        let mut encoding = 0;
-        result = mpg123::mpg123_getformat(mpg123_handle, &mut rate, &mut channels, &mut encoding);
-        if result != mpg123::MPG123_OK as c_int {
-            cleanup_and_raise!("failed to get the format");
-        }
-        let buffer_size = 1024;
-        buffer = libc::malloc(buffer_size) as *mut _;
-        loop {
-            let mut read = 0;
-            result = mpg123::mpg123_read(mpg123_handle, buffer, buffer_size, &mut read);
-            for i in (3..read).step_by(4) {
-                let mut rdr = Cursor::new(vec![
-                    *buffer.offset((i - 3) as isize),
-                    *buffer.offset((i - 2) as isize),
-                    *buffer.offset((i - 1) as isize),
-                    *buffer.offset(i as isize),
-                ]);
-                frames.push(f64::from(rdr.read_f32::<LittleEndian>().unwrap()));
-            }
-            if result != mpg123::MPG123_OK as c_int && result != mpg123::MPG123_DONE as c_int {
-                cleanup_and_raise!("failed to read the input");
-            }
-            if result == mpg123::MPG123_DONE as c_int {
-                break;
-            }
-        }
-        cleanup!();
     }
 
     Ok(frames)
