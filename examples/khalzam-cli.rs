@@ -54,7 +54,10 @@ fn main() {
     );
     shell.new_command("add_dir", "Add directory", 1, move |io, repo, args| {
         let rt = ThreadPool::new();
-        let resources = fs::read_dir(args[0]).unwrap();
+        let resources = match fs::read_dir(args[0]) {
+            Ok(r) => r,
+            Err(e) => return Err(shrust::ExecError::Other(Box::from(e))),
+        };
         for path in resources {
             if let Ok(path) = path {
                 let repo = repo.clone();
