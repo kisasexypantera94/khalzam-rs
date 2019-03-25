@@ -1,4 +1,4 @@
-//! `db module` takes care of interaction with repository/database.
+//! `db` module takes care of interaction with repository/database.
 use std::error::Error;
 
 pub mod pg;
