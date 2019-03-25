@@ -1,8 +1,9 @@
+//! `db module` takes care of interaction with repository/database.
 use std::error::Error;
 
 pub mod pg;
 
-/// Repository is an abstraction of database containing fingerprints.
+/// `Repository` is an abstraction of database containing fingerprints.
 pub trait Repository {
     /// Map hashes from hash_array to song.
     fn index(&self, song: &str, hash_array: &[usize]) -> Result<(), Box<Error>>;

@@ -1,3 +1,4 @@
+//! `fingerprint` module takes care of audio decoding and creating acoustic fingerprints.
 use minimp3::{Decoder, Frame};
 use rustfft::algorithm::Radix4;
 use rustfft::num_complex::Complex;
@@ -42,6 +43,8 @@ impl FingerprintHandle {
 }
 
 /// Mp3 decoding function.
+///
+/// Decoding is done using `minimp3.`
 /// Samples are read frame by frame and pushed to the vector.
 /// Conversion to mono is done by simply taking the mean of left and right channels.
 fn decode_mp3(filename: &str) -> Result<Vec<f64>, Box<Error>> {

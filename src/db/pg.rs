@@ -1,3 +1,5 @@
+//! `pg` module implements `Repository` with PostgresSQL database and takes care
+//! of direct interaction with database.
 use crate::db::Repository;
 use crate::fingerprint::FingerprintHandle;
 use crate::MusicLibrary;
@@ -15,7 +17,7 @@ struct Candidate {
     match_num: usize,
 }
 
-/// Table is used as a counter structure to find the most similar songs in database.
+/// `Table` is used as a counter structure to find the most similar songs in database.
 struct Table {
     /// highest number of matches among timedelta_best
     absolute_best: usize,
@@ -31,6 +33,7 @@ struct Hash {
     sid: PgInteger,
 }
 
+/// `PostgresRepo` is an implementation of `Repository` interface.
 pub struct PostgresRepo {
     conn: Arc<Mutex<Connection>>,
 }

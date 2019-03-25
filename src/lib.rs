@@ -1,3 +1,12 @@
+//! # Khalzam
+//!
+//! `khalzam` is an audio recognition library
+//! that makes it easy to index and recognize audio files.
+//! It focuses on speed, efficiency and simplicity.
+//!
+//! Its algrorithm is based on [this article]
+//!
+//! [this article]: https://royvanrijn.com/blog/2010/06/creating-shazam-in-java/
 pub mod db;
 mod fingerprint;
 
@@ -6,7 +15,8 @@ use fingerprint::FingerprintHandle;
 use std::error::Error;
 use std::path::Path;
 
-/// MusicLibrary holds a value which implements Repository interface.
+/// `MusicLibrary` is the central structure of the algorithm.
+/// It is the link for fingerprinting and repository interaction.
 pub struct MusicLibrary<T>
 where
     T: Repository,
@@ -19,7 +29,7 @@ impl<T> MusicLibrary<T>
 where
     T: Repository,
 {
-    /// Add song
+    /// Add song.
     pub fn add(&self, filename: &str) -> Result<(), Box<Error>> {
         check_extension(filename)?;
 
@@ -48,6 +58,7 @@ where
         }
     }
 
+    /// Delete song.
     pub fn delete(&self, songname: &str) -> Result<String, Box<Error>> {
         match self.repo.delete(songname) {
             Ok(x) if x > 0 => Ok("Successfully deleted".to_string()),
@@ -57,6 +68,7 @@ where
     }
 }
 
+/// Сheck whether it is possible to process a file.
 fn check_extension(filename: &str) -> Result<(), Box<Error>> {
     let path = Path::new(filename);
     let ext = match path.extension() {
