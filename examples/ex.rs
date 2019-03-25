@@ -11,7 +11,7 @@ fn main() {
         Arc::new(PostgresRepo::open("postgres://kisasexypantera94:@localhost/khalzam").unwrap());
 
     let rt = ThreadPool::new();
-    let resources = fs::read_dir("../resources").unwrap();
+    let resources = fs::read_dir("../assets/resources").unwrap();
     for path in resources {
         if let Ok(path) = path {
             let repo = pgrepo.clone();
@@ -32,7 +32,7 @@ fn main() {
 
     rt.shutdown().wait().unwrap();
 
-    let samples = fs::read_dir("../samples").unwrap();
+    let samples = fs::read_dir("../assets/samples").unwrap();
     for path in samples {
         if let Ok(path) = path {
             let name = String::from(path.path().file_name().unwrap().to_str().unwrap());
@@ -41,6 +41,4 @@ fn main() {
             println!("Best match: {}", pgrepo.recognize(&path).unwrap());
         }
     }
-
-    println!("{}", pgrepo.delete("samka").unwrap());
 }

@@ -6,7 +6,8 @@ edition = "2018"
 license = "MIT"
 description = "Simple audio recognition library, port of khalzam-go"
 repository = "https://github.com/kisasexypantera94/khalzam-rs"
-readme="README.md"
+readme = "README.md"
+exclude = ["assets/**"]
 
 [dependencies]
 postgres = "0.15"
