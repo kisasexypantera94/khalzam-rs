@@ -16,4 +16,7 @@ createdb -O user databasename
 psql -f initdb.sql databasename
 ```
 
-## [Usage examples](https://github.com/kisasexypantera94/khalzam-rs/tree/master/examples)
+## Usage
+You can use the library either
+through the [API](https://github.com/kisasexypantera94/khalzam-rs/tree/master/examples)
+or using [khalzam-cli](https://github.com/kisasexypantera94/khalzam-cli)
