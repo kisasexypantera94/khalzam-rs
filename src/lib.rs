@@ -1,5 +1,3 @@
-//! # Khalzam
-//!
 //! `khalzam` is an audio recognition library
 //! that makes it easy to index and recognize audio files.
 //! It focuses on speed, efficiency and simplicity.
@@ -29,19 +27,21 @@ impl<T> MusicLibrary<T>
 where
     T: Repository,
 {
+    /// Create a new instance of `MusicLibrary`
+    pub fn new(repo: T) -> MusicLibrary<T> {
+        MusicLibrary {
+            repo,
+            fp_handle: FingerprintHandle::new(),
+        }
+    }
+
     /// Add song.
     pub fn add(&self, filename: &str) -> Result<(), Box<Error>> {
         check_extension(filename)?;
 
-        let song = match Path::new(filename).file_stem() {
-            Some(stem) => match stem.to_str() {
-                Some(stem_str) => stem_str,
-                None => return Err(Box::from(format!("can't convert {:?} to str", stem))),
-            },
-            None => return Err(Box::from("filename is empty")),
-        };
+        let song = get_songname(filename)?;
         let hash_array = self.fp_handle.calc_fingerprint(filename)?;
-        self.repo.index(song, &hash_array)
+        self.repo.index(&song, &hash_array)
     }
 
     /// Recognize song. It returns the songname of the closest match in repository.
@@ -85,5 +85,13 @@ fn check_extension(filename: &str) -> Result<(), Box<Error>> {
     Ok(())
 }
 
-#[cfg(test)]
-mod tests {}
+/// Get file basename without extension
+fn get_songname(filename: &str) -> Result<String, Box<Error>> {
+    match Path::new(filename).file_stem() {
+        Some(stem) => match stem.to_str() {
+            Some(stem_str) => Ok(stem_str.to_string()),
+            None => Err(Box::from(format!("can't convert {:?} to str", stem))),
+        },
+        None => Err(Box::from("filename is empty")),
+    }
+}

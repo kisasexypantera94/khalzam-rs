@@ -1,8 +1,6 @@
 //! `pg` module implements `Repository` with PostgresSQL database and takes care
 //! of direct interaction with database.
 use crate::db::Repository;
-use crate::fingerprint::FingerprintHandle;
-use crate::MusicLibrary;
 use hashbrown::HashMap;
 use postgres::{Connection, TlsMode};
 use std::cmp::Reverse;
@@ -39,11 +37,11 @@ pub struct PostgresRepo {
 }
 
 impl PostgresRepo {
-    pub fn open(pg_url: &str) -> Result<MusicLibrary<PostgresRepo>, postgres::Error> {
-        let conn = Arc::new(Mutex::new(Connection::connect(pg_url, TlsMode::None)?));
-        Ok(MusicLibrary {
-            repo: PostgresRepo { conn },
-            fp_handle: FingerprintHandle::new(),
+    /// Connect to postgres database
+    pub fn open(pg_url: &str) -> Result<PostgresRepo, postgres::Error> {
+        let conn = Connection::connect(pg_url, TlsMode::None)?;
+        Ok(PostgresRepo {
+            conn: Arc::new(Mutex::new(conn)),
         })
     }
 }
