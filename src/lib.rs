@@ -49,21 +49,17 @@ where
         check_extension(filename)?;
 
         let hash_array = self.fp_handle.calc_fingerprint(filename)?;
-        match self.repo.find(&hash_array) {
-            Ok(opt) => match opt {
-                Some(res) => Ok(res),
-                None => Ok("No matchings".to_string()),
-            },
-            Err(e) => Err(e),
+        match self.repo.find(&hash_array)? {
+            Some(res) => Ok(res),
+            None => Ok("No matchings".to_string()),
         }
     }
 
     /// Delete song.
     pub fn delete(&self, songname: &str) -> Result<String, Box<Error>> {
-        match self.repo.delete(songname) {
-            Ok(x) if x > 0 => Ok("Successfully deleted".to_string()),
-            Ok(_) => Ok("Song not found".to_string()),
-            Err(e) => Err(Box::from(e)),
+        match self.repo.delete(songname)? {
+            x if x > 0 => Ok("Successfully deleted".to_string()),
+            _ => Ok("Song not found".to_string()),
         }
     }
 }
