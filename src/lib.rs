@@ -2,7 +2,7 @@
 //! that makes it easy to index and recognize audio files.
 //! It focuses on speed, efficiency and simplicity.
 //!
-//! Its algrorithm is based on [this article]
+//! Its algrorithm is based on [this article].
 //!
 //! [this article]: https://royvanrijn.com/blog/2010/06/creating-shazam-in-java/
 pub mod db;

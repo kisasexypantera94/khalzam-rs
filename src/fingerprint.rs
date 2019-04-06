@@ -16,7 +16,7 @@ const FUZZ_FACTOR: usize = 2;
 /// Helper struct for calculating acoustic fingerprint
 pub struct FingerprintHandle {
     /// FFT algorithm
-    fft: Radix4<f64>,
+    fft: Radix4<f32>,
 }
 
 impl FingerprintHandle {
@@ -27,12 +27,12 @@ impl FingerprintHandle {
     }
 
     pub fn calc_fingerprint(&self, filename: &str) -> Result<Vec<usize>, Box<Error>> {
-        let pcm_f64 = decode_mp3(filename)?;
+        let pcm_f32 = decode_mp3(filename)?;
         let mut hash_array = Vec::<usize>::new();
 
-        for chunk in pcm_f64.chunks_exact(FFT_WINDOW_SIZE) {
-            let mut input: Vec<Complex<f64>> = chunk.iter().map(Complex::from).collect();
-            let mut output: Vec<Complex<f64>> = vec![Complex::zero(); FFT_WINDOW_SIZE];
+        for chunk in pcm_f32.chunks_exact(FFT_WINDOW_SIZE) {
+            let mut input: Vec<Complex<f32>> = chunk.iter().map(Complex::from).collect();
+            let mut output: Vec<Complex<f32>> = vec![Complex::zero(); FFT_WINDOW_SIZE];
             self.fft.process(&mut input, &mut output);
 
             hash_array.push(get_key_points(&output));
@@ -47,25 +47,23 @@ impl FingerprintHandle {
 /// Decoding is done using `minimp3.`
 /// Samples are read frame by frame and pushed to the vector.
 /// Conversion to mono is done by simply taking the mean of left and right channels.
-fn decode_mp3(filename: &str) -> Result<Vec<f64>, Box<Error>> {
+fn decode_mp3(filename: &str) -> Result<Vec<f32>, Box<Error>> {
     let mut decoder = Decoder::new(File::open(filename)?);
     let mut frames = Vec::new();
 
     loop {
         match decoder.next_frame() {
-            Ok(Frame { data, channels, .. }) => match channels {
-                2 => {
-                    for pair in data.chunks_exact(2) {
-                        frames.push(f64::from(pair[0] / 2 + pair[1] / 2));
-                    }
+            Ok(Frame { data, channels, .. }) => {
+                if channels < 1 {
+                    return Err(Box::from("Invalid number of channels"));
                 }
-                1 => {
-                    for &sample in data.iter() {
-                        frames.push(f64::from(sample));
-                    }
+
+                for samples in data.chunks_exact(channels) {
+                    frames.push(f32::from(
+                        samples.iter().fold(0, |sum, x| sum + x / channels as i16),
+                    ));
                 }
-                _ => return Err(Box::from("Invalid number of channels")),
-            },
+            }
             Err(minimp3::Error::Eof) => break,
             Err(e) => return Err(Box::from(e)),
         }
@@ -75,8 +73,8 @@ fn decode_mp3(filename: &str) -> Result<Vec<f64>, Box<Error>> {
 }
 
 /// Find points with max magnitude in each of the bins
-fn get_key_points(arr: &[Complex<f64>]) -> usize {
-    let mut high_scores: Vec<f64> = vec![0.0; FREQ_BINS.len()];
+fn get_key_points(arr: &[Complex<f32>]) -> usize {
+    let mut high_scores: Vec<f32> = vec![0.0; FREQ_BINS.len()];
     let mut record_points: Vec<usize> = vec![0; FREQ_BINS.len()];
 
     for bin in FREQ_BIN_FIRST..=FREQ_BIN_LAST {
