@@ -118,7 +118,8 @@ impl Repository for PostgresRepo {
             )?
             .get(0)
             .get("song");
-        Ok(Some(song_name))
+        let similarity = (100.0 * matchings[0].match_num as f64 / hash_array.len() as f64) as isize;
+        Ok(Some(format!("{} ({}% matched)", song_name, similarity)))
     }
 
     fn delete(&self, song: &str) -> Result<u64, Box<Error>> {
