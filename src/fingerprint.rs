@@ -28,15 +28,17 @@ impl FingerprintHandle {
 
     pub fn calc_fingerprint(&self, filename: &str) -> Result<Vec<usize>, Box<Error>> {
         let pcm_f32 = decode_mp3(filename)?;
-        let mut hash_array = Vec::<usize>::new();
 
-        for chunk in pcm_f32.chunks_exact(FFT_WINDOW_SIZE) {
-            let mut input: Vec<Complex<f32>> = chunk.iter().map(Complex::from).collect();
-            let mut output: Vec<Complex<f32>> = vec![Complex::zero(); FFT_WINDOW_SIZE];
-            self.fft.process(&mut input, &mut output);
+        let hash_array = pcm_f32
+            .chunks_exact(FFT_WINDOW_SIZE)
+            .map(|chunk| {
+                let mut input: Vec<Complex<f32>> = chunk.iter().map(Complex::from).collect();
+                let mut output: Vec<Complex<f32>> = vec![Complex::zero(); FFT_WINDOW_SIZE];
+                self.fft.process(&mut input, &mut output);
 
-            hash_array.push(get_key_points(&output));
-        }
+                get_key_points(&output)
+            })
+            .collect();
 
         Ok(hash_array)
     }

@@ -1,4 +1,4 @@
-//! `pg` module implements `Repository` with PostgresSQL database and takes care
+//! `pg` module implements `Repository` with PostgreSQL database and takes care
 //! of direct interaction with database.
 use crate::db::Repository;
 use hashbrown::HashMap;
