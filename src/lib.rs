@@ -91,3 +91,18 @@ fn get_songname(filename: &str) -> Result<String, Box<Error>> {
         None => Err(Box::from("filename is empty")),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn test_check_extension() {
+        assert!(check_extension("good.mp3").is_ok());
+        assert!(check_extension("bad.pdf").is_err());
+    }
+
+    #[test]
+    fn test_get_songname() {
+        assert_eq!(get_songname("some_name.mp3").unwrap(), "some_name");
+    }
+}
