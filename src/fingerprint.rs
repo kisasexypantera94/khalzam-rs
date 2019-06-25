@@ -102,3 +102,13 @@ fn hash(arr: &[usize]) -> usize {
         + (arr[1] - (arr[1] % FUZZ_FACTOR)) * usize::pow(10, 2)
         + (arr[0] - (arr[0] % FUZZ_FACTOR))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_hash() {
+        assert_eq!(hash(&[40, 20, 50, 30]), 3005002040);
+    }
+}

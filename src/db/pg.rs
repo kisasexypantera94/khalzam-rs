@@ -1,9 +1,9 @@
 //! `pg` module implements `Repository` with PostgreSQL database and takes care
 //! of direct interaction with database.
 use crate::db::Repository;
-use hashbrown::HashMap;
 use postgres::{Connection, TlsMode};
 use std::cmp::Reverse;
+use std::collections::HashMap;
 use std::error::Error;
 use std::sync::{Arc, Mutex};
 
