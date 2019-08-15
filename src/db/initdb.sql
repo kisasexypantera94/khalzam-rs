@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 11.1
--- Dumped by pg_dump version 11.1
+-- Dumped from database version 11.4
+-- Dumped by pg_dump version 11.4
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -12,6 +12,7 @@ SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
 SET check_function_bodies = false;
+SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
@@ -120,6 +121,20 @@ ALTER TABLE ONLY public.songs
 
 
 --
+-- Name: hashes_hash_time_sid_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX hashes_hash_time_sid_idx ON public.hashes USING btree (hash, "time", sid);
+
+
+--
+-- Name: hashes_time_sid_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX hashes_time_sid_idx ON public.hashes USING btree ("time", sid);
+
+
+--
 -- Name: hashes sid; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -130,3 +145,4 @@ ALTER TABLE ONLY public.hashes
 --
 -- PostgreSQL database dump complete
 --
+
