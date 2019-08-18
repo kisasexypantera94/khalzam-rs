@@ -1,6 +1,6 @@
 [package]
 name = "khalzam"
-version = "0.3.8"
+version = "0.3.9"
 authors = ["kisasexypantera94 <green.grinya@gmail.com>"]
 edition = "2018"
 license = "MIT"
@@ -12,7 +12,9 @@ categories = ["multimedia", "multimedia::audio"]
 keywords = ["audio", "recognition", "shazam"]
 
 [dependencies]
-postgres = "0.15"
+postgres = "0.16.0-rc.1"
+r2d2 = "0.8.5"
+r2d2_postgres = "0.15.0-rc.1"
 minimp3 = "0.3.2"
 rustfft = "3.0.0"
 

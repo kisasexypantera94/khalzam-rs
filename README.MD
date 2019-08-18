@@ -3,8 +3,6 @@
 [![Latest Version](https://img.shields.io/crates/v/khalzam.svg)](https://crates.io/crates/khalzam)
 [![Latest Version](https://docs.rs/khalzam/badge.svg)](https://docs.rs/khalzam)
 ## About
-This is a port of my recent project [khalzam-go](https://github.com/kisasexypantera94/khalzam).
-
 `khalzam` is an audio recognition library that makes it easy to index and recognize audio files.
 It focuses on speed, efficiency and simplicity.
 Its algrorithm is based on [this article](https://royvanrijn.com/blog/2010/06/creating-shazam-in-java/).
@@ -12,9 +10,7 @@ Its algrorithm is based on [this article](https://royvanrijn.com/blog/2010/06/cr
 ## Setup
 You need to create and initialize database:
 ```zsh
-cd src/db
-createdb -O user databasename
-psql -f initdb.sql databasename
+$ sh ./setup.sh
 ```
 
 ## Usage

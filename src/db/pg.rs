@@ -1,11 +1,13 @@
 //! `pg` module implements `Repository` with PostgreSQL database and takes care
 //! of direct interaction with database.
 use crate::db::Repository;
-use postgres::{Connection, TlsMode};
+
+use postgres::NoTls;
+use r2d2_postgres::PostgresConnectionManager;
+
 use std::cmp::Reverse;
 use std::collections::HashMap;
 use std::error::Error;
-use std::sync::{Arc, Mutex};
 
 type PgBigInt = i64;
 type PgInteger = i32;
@@ -33,22 +35,21 @@ struct Hash {
 
 /// `PostgresRepo` is an implementation of `Repository` interface.
 pub struct PostgresRepo {
-    conn: Arc<Mutex<Connection>>,
+    pool: r2d2::Pool<PostgresConnectionManager<NoTls>>,
 }
 
 impl PostgresRepo {
     /// Connect to postgres database
-    pub fn open(pg_url: &str) -> Result<PostgresRepo, postgres::Error> {
-        let conn = Connection::connect(pg_url, TlsMode::None)?;
-        Ok(PostgresRepo {
-            conn: Arc::new(Mutex::new(conn)),
-        })
+    pub fn open(config: &str) -> Result<PostgresRepo, postgres::Error> {
+        let manager = PostgresConnectionManager::new(config.parse()?, NoTls);
+        let pool = r2d2::Pool::new(manager).unwrap();
+        Ok(PostgresRepo { pool })
     }
 }
 
 impl Repository for PostgresRepo {
     fn index(&self, song: &str, hash_array: &[usize]) -> Result<(), Box<Error>> {
-        let conn = self.conn.lock().unwrap();
+        let mut conn = self.pool.clone().get().unwrap();
 
         let sid: PgInteger = conn
             .query(
@@ -56,22 +57,26 @@ impl Repository for PostgresRepo {
                 &[&song],
             )?
             .get(0)
+            .unwrap()
             .get("sid");
 
         let stmt = conn.prepare("INSERT INTO hashes(hash, time, sid) VALUES($1, $2, $3);")?;
         for (time, hash) in hash_array.iter().enumerate() {
-            stmt.execute(&[&(*hash as PgBigInt), &(time as PgInteger), &sid])?;
+            conn.query(&stmt, &[&(*hash as PgBigInt), &(time as PgInteger), &sid])?;
         }
 
         Ok(())
     }
 
     fn find(&self, hash_array: &[usize]) -> Result<Option<String>, Box<Error>> {
-        let mut cnt = HashMap::<i32, Table>::new();
+        let mut conn = self.pool.clone().get().unwrap();
 
-        let conn = self.conn.lock().unwrap();
+        let mut cnt = HashMap::<i32, Table>::new();
+        let stmt = conn.prepare("SELECT * FROM hashes WHERE hash=$1;")?;
+
         for (t, &h) in hash_array.iter().enumerate() {
-            for row in &conn.query("SELECT * FROM hashes WHERE hash=$1;", &[&(h as PgBigInt)])? {
+            let result = conn.query(&stmt, &[&(h as PgBigInt)])?;
+            for row in &result {
                 let hash_row = Hash {
                     hid: row.get("hid"),
                     hash: row.get("hash"),
@@ -117,13 +122,14 @@ impl Repository for PostgresRepo {
                 &[&matchings[0].song_id],
             )?
             .get(0)
+            .unwrap()
             .get("song");
         let similarity = (100.0 * matchings[0].match_num as f64 / hash_array.len() as f64) as isize;
         Ok(Some(format!("{} ({}% matched)", song_name, similarity)))
     }
 
     fn delete(&self, song: &str) -> Result<u64, Box<Error>> {
-        let conn = self.conn.lock().unwrap();
+        let mut conn = self.pool.clone().get().unwrap();
         match conn.execute("DELETE FROM songs WHERE song=$1;", &[&song]) {
             Ok(affected) => Ok(affected),
             Err(e) => Err(Box::from(e)),

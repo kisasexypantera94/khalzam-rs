@@ -10,6 +10,7 @@ mod fingerprint;
 
 use db::Repository;
 use fingerprint::FingerprintHandle;
+
 use std::error::Error;
 use std::path::Path;
 
@@ -95,6 +96,7 @@ fn get_songname(filename: &str) -> Result<String, Box<Error>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
     #[test]
     fn test_check_extension() {
         assert!(check_extension("good.mp3").is_ok());

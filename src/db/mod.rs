@@ -1,7 +1,7 @@
 //! `db` module takes care of interaction with repository/database.
-use std::error::Error;
-
 pub mod pg;
+
+use std::error::Error;
 
 /// `Repository` is an abstraction of database containing fingerprints.
 pub trait Repository {
