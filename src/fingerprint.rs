@@ -27,7 +27,7 @@ impl FingerprintHandle {
         }
     }
 
-    pub fn calc_fingerprint(&self, filename: &str) -> Result<Vec<usize>, Box<Error>> {
+    pub fn calc_fingerprint(&self, filename: &str) -> Result<Vec<usize>, Box<dyn Error>> {
         let pcm_f32 = decode_mp3(filename)?;
 
         let hash_array = pcm_f32
@@ -50,7 +50,7 @@ impl FingerprintHandle {
 /// Decoding is done using `minimp3.`
 /// Samples are read frame by frame and pushed to the vector.
 /// Conversion to mono is done by simply taking the mean of left and right channels.
-fn decode_mp3(filename: &str) -> Result<Vec<f32>, Box<Error>> {
+fn decode_mp3(filename: &str) -> Result<Vec<f32>, Box<dyn Error>> {
     let mut decoder = Decoder::new(File::open(filename)?);
     let mut frames = Vec::new();
 
