@@ -48,7 +48,7 @@ impl PostgresRepo {
 }
 
 impl Repository for PostgresRepo {
-    fn index(&self, song: &str, hash_array: &[usize]) -> Result<(), Box<Error>> {
+    fn index(&self, song: &str, hash_array: &[usize]) -> Result<(), Box<dyn Error>> {
         let mut conn = self.pool.clone().get().unwrap();
 
         let sid: PgInteger = conn
@@ -68,7 +68,7 @@ impl Repository for PostgresRepo {
         Ok(())
     }
 
-    fn find(&self, hash_array: &[usize]) -> Result<Option<String>, Box<Error>> {
+    fn find(&self, hash_array: &[usize]) -> Result<Option<String>, Box<dyn Error>> {
         let mut conn = self.pool.clone().get().unwrap();
 
         let mut cnt = HashMap::<i32, Table>::new();
@@ -128,7 +128,7 @@ impl Repository for PostgresRepo {
         Ok(Some(format!("{} ({}% matched)", song_name, similarity)))
     }
 
-    fn delete(&self, song: &str) -> Result<u64, Box<Error>> {
+    fn delete(&self, song: &str) -> Result<u64, Box<dyn Error>> {
         let mut conn = self.pool.clone().get().unwrap();
         match conn.execute("DELETE FROM songs WHERE song=$1;", &[&song]) {
             Ok(affected) => Ok(affected),

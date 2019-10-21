@@ -37,7 +37,7 @@ where
     }
 
     /// Add song.
-    pub fn add(&self, filename: &str) -> Result<(), Box<Error>> {
+    pub fn add(&self, filename: &str) -> Result<(), Box<dyn Error>> {
         check_extension(filename)?;
 
         let song = get_songname(filename)?;
@@ -46,7 +46,7 @@ where
     }
 
     /// Recognize song. It returns the songname of the closest match in repository.
-    pub fn recognize(&self, filename: &str) -> Result<String, Box<Error>> {
+    pub fn recognize(&self, filename: &str) -> Result<String, Box<dyn Error>> {
         check_extension(filename)?;
 
         let hash_array = self.fp_handle.calc_fingerprint(filename)?;
@@ -57,7 +57,7 @@ where
     }
 
     /// Delete song.
-    pub fn delete(&self, songname: &str) -> Result<String, Box<Error>> {
+    pub fn delete(&self, songname: &str) -> Result<String, Box<dyn Error>> {
         match self.repo.delete(songname)? {
             x if x > 0 => Ok("Successfully deleted".to_string()),
             _ => Ok("Song not found".to_string()),
@@ -66,7 +66,7 @@ where
 }
 
 /// Сheck whether it is possible to process a file.
-fn check_extension(filename: &str) -> Result<(), Box<Error>> {
+fn check_extension(filename: &str) -> Result<(), Box<dyn Error>> {
     let path = Path::new(filename);
     let ext = match path.extension() {
         Some(e_osstr) => match e_osstr.to_str() {
@@ -83,7 +83,7 @@ fn check_extension(filename: &str) -> Result<(), Box<Error>> {
 }
 
 /// Get file basename without extension
-fn get_songname(filename: &str) -> Result<String, Box<Error>> {
+fn get_songname(filename: &str) -> Result<String, Box<dyn Error>> {
     match Path::new(filename).file_stem() {
         Some(stem) => match stem.to_str() {
             Some(stem_str) => Ok(stem_str.to_string()),
