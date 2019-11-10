@@ -7,6 +7,12 @@
 It focuses on speed, efficiency and simplicity.
 Its algrorithm is based on [this article](https://royvanrijn.com/blog/2010/06/creating-shazam-in-java/).
 
+## TODO
+* Rethink the way hashes are stored – use inverted index
+* Try to solve less specific problems:
+  * query by humming
+  * animal sounds recognition
+
 ## Setup
 You need to create and initialize database:
 ```zsh
